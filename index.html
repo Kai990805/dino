@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f7f2" />
+    <meta name="description" content="一款輕巧的 HTML5 恐龍跳躍遊戲。" />
+    <title>小恐龍跑酷
+
+    </title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="game-heading">
+        <p class="eyebrow">DINO RUNNER / 01</p>
+        <h1>小恐龍跑酷</h1>
+      </header>
+
+      <section class="game-frame" aria-label="小恐龍跑酷遊戲">
+        <canvas
+          id="game-canvas"
+          width="960"
+          height="360"
+          aria-label="遊戲畫面。按空白鍵或點擊畫面開始與跳躍。"
+          tabindex="0"
+        >
+          你的瀏覽器不支援 HTML5 Canvas。
+        </canvas>
+      </section>
+
+      <footer class="game-footer">
+        <p class="control-hint"><kbd>Space</kbd> 跳躍 <span aria-hidden="true">·</span> 點擊畫面也可以</p>
+        <p class="game-note">避開仙人掌，跑得越遠越好。</p>
+      </footer>
+    </main>
+  </body>
+</html>
