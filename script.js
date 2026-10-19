@@ -3,6 +3,74 @@
 
   const canvas = document.querySelector('#game-canvas');
   const context = canvas.getContext('2d');
+  const shibaFrames = [0, 3, 5, 8, 10].map((frame) => {
+    const image = new Image();
+    image.src = `assets/shiba-frame-${String(frame).padStart(2, '0')}.png`;
+    return image;
+  });
+
+  function removeEdgeBackground(image) {
+    const spriteCanvas = document.createElement('canvas');
+    spriteCanvas.width = image.naturalWidth;
+    spriteCanvas.height = image.naturalHeight;
+    const spriteContext = spriteCanvas.getContext('2d', { willReadFrequently: true });
+    spriteContext.drawImage(image, 0, 0);
+
+    const imageData = spriteContext.getImageData(0, 0, spriteCanvas.width, spriteCanvas.height);
+    const { data } = imageData;
+    const width = spriteCanvas.width;
+    const height = spriteCanvas.height;
+    const target = [data[0], data[1], data[2]];
+    const visited = new Uint8Array(width * height);
+    const queue = new Int32Array(width * height);
+    let queueEnd = 0;
+    let queueStart = 0;
+
+    function enqueueBackground(index) {
+      if (visited[index]) return;
+      const offset = index * 4;
+      if (
+        data[offset + 3] === 0 ||
+        Math.abs(data[offset] - target[0]) > 30 ||
+        Math.abs(data[offset + 1] - target[1]) > 30 ||
+        Math.abs(data[offset + 2] - target[2]) > 24
+      ) return;
+
+      visited[index] = 1;
+      queue[queueEnd] = index;
+      queueEnd += 1;
+    }
+
+    for (let x = 0; x < width; x += 1) {
+      enqueueBackground(x);
+      enqueueBackground((height - 1) * width + x);
+    }
+    for (let y = 0; y < height; y += 1) {
+      enqueueBackground(y * width);
+      enqueueBackground(y * width + width - 1);
+    }
+
+    while (queueStart < queueEnd) {
+      const index = queue[queueStart];
+      queueStart += 1;
+      data[index * 4 + 3] = 0;
+      const x = index % width;
+      if (x > 0) enqueueBackground(index - 1);
+      if (x < width - 1) enqueueBackground(index + 1);
+      if (index >= width) enqueueBackground(index - width);
+      if (index < width * (height - 1)) enqueueBackground(index + width);
+    }
+
+    spriteContext.putImageData(imageData, 0, 0);
+    image.src = spriteCanvas.toDataURL();
+  }
+
+  const shibaJump = new Image();
+  shibaJump.addEventListener('load', () => removeEdgeBackground(shibaJump), { once: true });
+  shibaJump.src = 'assets/跳';
+  const shibaFall = new Image();
+  shibaFall.addEventListener('load', () => removeEdgeBackground(shibaFall), { once: true });
+  shibaFall.src = 'assets/倒地';
 
   // 遊戲使用固定座標系，CSS 只負責縮放，避免手機尺寸改變物理判定。
   const WIDTH = canvas.width;
@@ -11,9 +79,9 @@
   const STORAGE_KEY = 'dino-runner-high-score';
 
   const COLORS = {
-    sky: '#dff1f3',
-    ink: '#193b35',
-    muted: '#789087',
+    sky: '#154b36',
+    ink: '#f2f5e9',
+    muted: '#c3d8c6',
     ground: '#5b914c',
     groundLight: '#b3d98a',
     orange: '#df8b4e',
@@ -23,7 +91,7 @@
   const player = {
     x: 112,
     y: GROUND_Y - 52,
-    width: 42,
+    width: 56,
     height: 52,
     velocityY: 0,
     grounded: true,
@@ -310,67 +378,25 @@
     const bounce = player.grounded && state === 'playing' ? Math.sin(player.runTime * 8) * 2 : 0;
     const x = player.x;
     const y = player.y + bounce;
-    const legSwing = player.grounded && state === 'playing' ? Math.sin(player.runTime * 12) * 5 : 0;
 
     if (shieldTimer > 0) {
       context.save();
       context.beginPath();
-      context.ellipse(x + 22, y + 27, 34, 37, 0, 0, Math.PI * 2);
+      context.ellipse(x + 28, y + 27, 36, 37, 0, 0, Math.PI * 2);
       context.strokeStyle = `rgba(229, 167, 66, ${0.45 + shieldTimer * 0.35})`;
       context.lineWidth = 4;
       context.stroke();
       context.restore();
     }
 
-    // 尾巴、背刺與長吻輪廓讓角色一眼看起來更像小型暴龍。
-    context.fillStyle = COLORS.ink;
-    context.beginPath();
-    context.moveTo(x + 13, y + 25);
-    context.lineTo(x - 5, y + 18);
-    context.lineTo(x + 2, y + 31);
-    context.lineTo(x + 15, y + 35);
-    context.closePath();
-    context.fill();
-
-    context.fillRect(x + 9, y + 20, 25, 25);
-    context.fillRect(x + 23, y + 13, 13, 19);
-    context.fillRect(x + 27, y + 5, 17, 16);
-    context.fillRect(x + 38, y + 12, 12, 8);
-    context.fillRect(x + 32, y + 19, 16, 4);
-
-    context.beginPath();
-    context.moveTo(x + 12, y + 21);
-    context.lineTo(x + 15, y + 13);
-    context.lineTo(x + 19, y + 21);
-    context.lineTo(x + 21, y + 11);
-    context.lineTo(x + 26, y + 20);
-    context.closePath();
-    context.fill();
-
-    // 淺色腹部、眼睛與短手臂加強角色層次。
-    context.fillStyle = '#8eb28a';
-    context.fillRect(x + 20, y + 34, 12, 6);
-    context.fillStyle = COLORS.ink;
-    context.fillRect(x + 29, y + 25, 8, 4);
-    context.fillRect(x + 35, y + 27, 4, 3);
-
-    context.fillStyle = '#f8faf5';
-    context.fillRect(x + 37, y + 9, 4, 4);
-    context.fillStyle = COLORS.ink;
-    context.fillRect(x + 39, y + 10, 2, 2);
-
-    // 跑步時交替擺腿，跳躍時收腿；腳爪用暖色做出小小的辨識點。
-    context.fillStyle = COLORS.orange;
-    if (player.grounded) {
-      context.fillRect(x + 13 + legSwing, y + 42, 8, 8);
-      context.fillRect(x + 27 - legSwing, y + 42, 8, 8);
-      context.fillRect(x + 10 + legSwing, y + 48, 9, 3);
-      context.fillRect(x + 25 - legSwing, y + 48, 9, 3);
-    } else {
-      context.fillRect(x + 13, y + 41, 8, 7);
-      context.fillRect(x + 27, y + 41, 8, 7);
-      context.fillRect(x + 10, y + 46, 9, 3);
-      context.fillRect(x + 25, y + 46, 9, 3);
+    const frameIndex = Math.floor(player.runTime * 1.2) % shibaFrames.length;
+    const frame = state === 'gameover'
+      ? shibaFall
+      : player.grounded
+        ? shibaFrames[frameIndex]
+        : shibaJump;
+    if (frame.complete && frame.naturalWidth > 0) {
+      context.drawImage(frame, x - 5, y - 10, 70, 70);
     }
   }
 
@@ -417,7 +443,7 @@
     context.fillStyle = accent;
     context.font = '800 30px Manrope, "Noto Sans TC", sans-serif';
     context.fillText(title, WIDTH / 2, 132);
-    context.fillStyle = '#60776c';
+    context.fillStyle = COLORS.muted;
     context.font = '500 14px Manrope, "Noto Sans TC", sans-serif';
     context.fillText(subtitle, WIDTH / 2, 165);
   }

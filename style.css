@@ -3,8 +3,8 @@
 :root {
   color-scheme: light;
   font-family: 'Manrope', 'Noto Sans TC', sans-serif;
-  color: #193b35;
-  background: #f4f7f2;
+  color: #f2f5e9;
+  background: #103a2c;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -23,9 +23,9 @@ body {
   place-items: center;
   padding: 32px 20px;
   background:
-    radial-gradient(ellipse at 15% 18%, rgb(204 226 195 / 42%), transparent 35%),
-    radial-gradient(ellipse at 88% 82%, rgb(245 216 172 / 35%), transparent 32%),
-    #f4f7f2;
+    radial-gradient(ellipse at 15% 18%, rgb(93 143 84 / 18%), transparent 35%),
+    radial-gradient(ellipse at 88% 82%, rgb(181 137 76 / 12%), transparent 32%),
+    #103a2c;
 }
 
 .game-shell {
@@ -43,14 +43,14 @@ body {
 
 .eyebrow {
   margin: 0 0 8px;
-  color: #68847a;
+  color: #b2cbb7;
   font: 500 11px/1 'DM Mono', monospace;
   letter-spacing: 0;
 }
 
 h1 {
   margin: 0;
-  color: #193b35;
+  color: #f2f5e9;
   font-size: clamp(24px, 5vw, 36px);
   font-weight: 800;
   line-height: 1.15;
@@ -58,7 +58,7 @@ h1 {
 
 .game-frame {
   overflow: hidden;
-  border: 1px solid #c7d5c7;
+  border: 1px solid #52745e;
   border-radius: 8px;
   background: #fbfcf8;
   box-shadow: 0 18px 50px rgb(40 67 52 / 10%), 0 2px 5px rgb(40 67 52 / 5%);
@@ -83,7 +83,7 @@ canvas:focus-visible {
   justify-content: space-between;
   gap: 12px;
   padding: 15px 2px 0;
-  color: #60776c;
+  color: #c3d8c6;
   font-size: 13px;
 }
 
@@ -99,10 +99,10 @@ canvas:focus-visible {
 
 kbd {
   padding: 4px 7px;
-  border: 1px solid #c7d5c7;
+  border: 1px solid #52745e;
   border-radius: 4px;
-  background: #fbfcf8;
-  color: #315c4d;
+  background: #1b4a38;
+  color: #f2f5e9;
   font: 500 11px/1.2 'DM Mono', monospace;
 }
 
