@@ -81,7 +81,7 @@ canvas:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   padding: 15px 2px 0;
   color: #c3d8c6;
   font-size: 13px;
@@ -110,6 +110,47 @@ kbd {
   text-align: right;
 }
 
+.music-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  color: #f2f5e9;
+}
+
+.music-toggle {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #6b9476;
+  border-radius: 4px;
+  background: #1b4a38;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.music-toggle:hover {
+  background: #285d43;
+}
+
+.music-toggle:focus-visible,
+#music-volume:focus-visible {
+  outline: 2px solid #f6c44f;
+  outline-offset: 3px;
+}
+
+#music-volume {
+  width: 96px;
+  accent-color: #f6c44f;
+  cursor: pointer;
+}
+
+#music-volume-value {
+  min-width: 34px;
+  color: #c3d8c6;
+  font: 500 11px 'DM Mono', monospace;
+}
+
 @keyframes arrive {
   from {
     opacity: 0;
@@ -136,6 +177,14 @@ kbd {
     flex-direction: column;
     padding-top: 12px;
     font-size: 12px;
+  }
+
+  .music-controls {
+    gap: 8px;
+  }
+
+  #music-volume {
+    width: min(96px, 28vw);
   }
 
   .game-note {

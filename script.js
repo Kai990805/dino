@@ -3,6 +3,37 @@
 
   const canvas = document.querySelector('#game-canvas');
   const context = canvas.getContext('2d');
+  const backgroundMusic = document.querySelector('#background-music');
+  const musicToggle = document.querySelector('#music-toggle');
+  const musicVolume = document.querySelector('#music-volume');
+  const musicVolumeValue = document.querySelector('#music-volume-value');
+  backgroundMusic.volume = Number(musicVolume.value) / 100;
+
+  function setMusicButton(isPlaying) {
+    musicToggle.textContent = isPlaying ? '暫停音樂' : '播放音樂';
+    musicToggle.setAttribute('aria-pressed', String(isPlaying));
+  }
+
+  function startBackgroundMusic() {
+    backgroundMusic.play().then(() => setMusicButton(true)).catch(() => setMusicButton(false));
+  }
+
+  function toggleBackgroundMusic() {
+    if (backgroundMusic.paused) {
+      startBackgroundMusic();
+    } else {
+      backgroundMusic.pause();
+      setMusicButton(false);
+    }
+  }
+
+  musicToggle.addEventListener('click', toggleBackgroundMusic);
+  musicVolume.addEventListener('input', () => {
+    backgroundMusic.volume = Number(musicVolume.value) / 100;
+    musicVolumeValue.value = `${musicVolume.value}%`;
+  });
+  backgroundMusic.addEventListener('pause', () => setMusicButton(false));
+  backgroundMusic.addEventListener('play', () => setMusicButton(true));
   const shibaFrames = [0, 3, 5, 8, 10].map((frame) => {
     const image = new Image();
     image.src = `assets/shiba-frame-${String(frame).padStart(2, '0')}.png`;
@@ -100,16 +131,20 @@
 
   let state = 'ready';
   let obstacles = [];
+  let coins = [];
   let groundOffset = 0;
   let elapsed = 0;
   let score = 0;
+  let coinCount = 0;
   let speed = 360;
   let spawnTimer = 1.2;
+  let coinSpawnTimer = 1.5;
   let skyTime = 0;
   let lifeTokenUsed = false;
   let shieldTimer = 0;
   let previousTime = 0;
   let highScore = readHighScore();
+  let audioContext = null;
 
   // 讀取儲存資料時一併檢查格式，避免損壞的資料影響遊戲啟動。
   function readHighScore() {
@@ -131,11 +166,15 @@
 
   function resetGame() {
     state = 'playing';
+    startBackgroundMusic();
     obstacles = [];
+    coins = [];
     elapsed = 0;
     score = 0;
+    coinCount = 0;
     speed = 360;
     spawnTimer = 1.15;
+    coinSpawnTimer = 1.5;
     lifeTokenUsed = false;
     shieldTimer = 0;
     player.y = GROUND_Y - player.height;
@@ -193,6 +232,51 @@
     });
   }
 
+  function createCoin() {
+    const heights = [GROUND_Y - 36, GROUND_Y - 86, GROUND_Y - 136];
+    coins.push({
+      x: WIDTH + 20,
+      y: heights[Math.floor(Math.random() * heights.length)],
+      radius: 11,
+    });
+  }
+
+  function playCoinSound() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    try {
+      if (!audioContext) audioContext = new AudioContextClass();
+      if (audioContext.state === 'suspended') void audioContext.resume();
+
+      const startTime = audioContext.currentTime;
+      [987.77, 1318.51].forEach((frequency, index) => {
+        const oscillator = audioContext.createOscillator();
+        const volume = audioContext.createGain();
+        const noteStart = startTime + index * 0.075;
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, noteStart);
+        volume.gain.setValueAtTime(0.0001, noteStart);
+        volume.gain.exponentialRampToValueAtTime(0.12, noteStart + 0.012);
+        volume.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.16);
+        oscillator.connect(volume);
+        volume.connect(audioContext.destination);
+        oscillator.start(noteStart);
+        oscillator.stop(noteStart + 0.17);
+      });
+    } catch {
+      // 音訊不可用時仍維持正常遊戲流程。
+    }
+  }
+
+  function collectsCoin(coin) {
+    const closestX = Math.max(player.x + 7, Math.min(coin.x, player.x + player.width - 7));
+    const closestY = Math.max(player.y + 5, Math.min(coin.y, player.y + player.height - 5));
+    const distanceX = coin.x - closestX;
+    const distanceY = coin.y - closestY;
+    return distanceX * distanceX + distanceY * distanceY <= coin.radius * coin.radius;
+  }
+
   function intersects(first, second) {
     // 縮小碰撞箱，讓視覺邊緣擦過障礙時手感更自然。
     const insetX = 7;
@@ -237,6 +321,24 @@
       createObstacle();
       spawnTimer = 0.95 + Math.random() * 0.8 + Math.max(0, 340 - speed) / 1200;
     }
+
+    coinSpawnTimer -= deltaTime;
+    if (coinSpawnTimer <= 0) {
+      createCoin();
+      coinSpawnTimer = 1.5 + Math.random() * 1.1;
+    }
+
+    for (let index = 0; index < coins.length; index += 1) {
+      const coin = coins[index];
+      coin.x -= speed * deltaTime;
+      if (collectsCoin(coin)) {
+        coinCount += 1;
+        playCoinSound();
+        coins.splice(index, 1);
+        index -= 1;
+      }
+    }
+    coins = coins.filter((coin) => coin.x + coin.radius > -10);
 
     for (let index = 0; index < obstacles.length; index += 1) {
       const obstacle = obstacles[index];
@@ -410,6 +512,23 @@
     context.fillRect(x + width * 0.65, y + height * 0.4, 8, height * 0.2);
   }
 
+  function drawCoin(coin) {
+    context.save();
+    context.translate(coin.x, coin.y);
+    context.fillStyle = '#f6c44f';
+    context.strokeStyle = '#b87523';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(0, 0, coin.radius, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.fillStyle = '#fff0a5';
+    context.beginPath();
+    context.ellipse(-2, 0, 2.5, 6, 0, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
   function drawScore() {
     context.textAlign = 'right';
     context.textBaseline = 'top';
@@ -419,6 +538,8 @@
     context.fillStyle = COLORS.muted;
     context.font = '400 12px "DM Mono", monospace';
     context.fillText(`BEST  ${String(highScore).padStart(5, '0')}`, WIDTH - 34, 49);
+    context.fillStyle = '#f6c44f';
+    context.fillText(`COINS  ${String(coinCount).padStart(3, '0')}`, WIDTH - 34, 70);
 
     context.textAlign = 'left';
     context.textBaseline = 'middle';
@@ -451,6 +572,7 @@
   function render() {
     drawBackground();
     for (const obstacle of obstacles) drawObstacle(obstacle);
+    for (const coin of coins) drawCoin(coin);
     drawPlayer();
     drawScore();
 

@@ -32,8 +32,20 @@
 
       <footer class="game-footer">
         <p class="control-hint"><kbd>Space</kbd> 跳躍 <span aria-hidden="true">·</span> 點擊畫面也可以</p>
-        <p class="game-note">避開仙人掌，跑得越遠越好。</p>
+        <div class="music-controls" aria-label="背景音樂控制">
+          <button id="music-toggle" class="music-toggle" type="button" aria-pressed="false">播放音樂</button>
+          <label for="music-volume">音量</label>
+          <input id="music-volume" type="range" min="0" max="100" value="35" step="1" />
+          <output id="music-volume-value" for="music-volume">35%</output>
+        </div>
+        <p class="game-note">避開仙人掌，收集金幣，跑得越遠越好。</p>
       </footer>
     </main>
+    <audio
+      id="background-music"
+      src="assets/dino-dash-cyber-run-1-clean.mp3"
+      loop
+      preload="none"
+    ></audio>
   </body>
 </html>
